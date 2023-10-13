@@ -1,36 +1,69 @@
 import { useState, useEffect } from "react";
-import axios from 'axios'
+import axios from "axios";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
 
-  useEffect(()=>{
-    axios.get('http://localhost:3001/persons')
-    .then((response)=>{
-      let info = response.data
-      setPersons(response.data)
-      console.log(info)
-    })
-  },[])
+  const isName = (person) => {
+    // return person.name === newName;
+    return false;
+  };
 
-  const addName = (event) => {
+  useEffect(() => {
+    axios.get("http://localhost:3001/persons").then((response) => {
+      console.log();
+      setPersons(response.data);
+    });
+  }, []);
+
+  const addName = () => {
+    const personObject = {
+      name: newName,
+      number: phone,
+    };
+    setMessage(`Added ${newName} to phonebook !!!`)
+      .post("http://localhost:3001/persons", personObject)
+      .then((response) => {
+        console.log(response.data);
+        setPersons(persons.concat(response.data));
+        setNewName(" ");
+        setPhone(" ");
+      });
+  };
+
+  const updateName = (event) => {
     event.preventDefault();
     const personObject = {
       name: newName,
-      phone: phone,
-      id: persons.length + 1,
+      number: phone,
     };
 
-    setPersons(persons.concat(personObject));
-    setNewName(" ");
-    setPhone(" ");
+    console.log(personObject.name, "thesame");
+
+    // axios
+    //   .post("http://localhost:3001/persons", personObject)
+    //   .then((response) => {
+    //     setPersons(persons.concat(response.data));
+    //     setNewName(" ");
+    //     setPhone(" ");
+    //   });
+  };
+
+  const deleteName = (id) => {
+    axios.delete(`http://localhost:3001/persons/${id}`).then(() => {
+      axios.get(`http://localhost:3001/persons`).then((response) => {
+        setPersons(response.data);
+      });
+    });
   };
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <h1>{message}</h1>
       <form>
         <div>
           name:
@@ -38,8 +71,8 @@ const App = () => {
             value={newName}
             onChange={(e) => {
               setNewName(e.target.value);
-              console.log(e.target.value);
             }}
+            required
           />
         </div>
         <div>
@@ -48,12 +81,17 @@ const App = () => {
             value={phone}
             onChange={(e) => {
               setPhone(e.target.value);
-              console.log(e.target.value);
             }}
+            required
           />
         </div>
         <div>
-          <button type="submit" onClick={addName}>
+          <button
+            type="submit"
+            onClick={() => {
+              addName();
+            }}
+          >
             add
           </button>
         </div>
@@ -63,9 +101,22 @@ const App = () => {
 
       <ol>
         {persons.map((person) => (
-          <li key={person.id}>
-            {person.name} - {person.number}
-          </li>
+          <div key={person.id}>
+            <li>
+              {person.name} - {person.number}
+            </li>
+            <button
+              onClick={() => {
+                console.log("first");
+                if (window.confirm(`Delete ${person.name} ?`)) {
+                  window.alert(`${person.name} has been deleted!`);
+                  deleteName(person.id);
+                }
+              }}
+            >
+              Delete
+            </button>
+          </div>
         ))}
       </ol>
     </div>
